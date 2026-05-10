@@ -1,50 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xác Thực Hệ Thống - FB AUTO POST</title>
+    <style>
+        :root { --primary: #2563eb; --success: #16a34a; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: var(--card); padding: 40px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); text-align: center; max-width: 400px; width: 90%; border: 1px solid #334155; }
+        h2 { margin-bottom: 10px; font-size: 24px; font-weight: 800; background: linear-gradient(90deg, #3b82f6, #2dd4bf); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        #status-text { color: #94a3b8; margin-bottom: 20px; font-size: 14px; }
+        .key-display { display: none; margin-top: 20px; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        #key-value { font-size: 36px; font-weight: 800; color: #4ade80; background: rgba(22, 163, 74, 0.1); border: 2px solid var(--success); padding: 20px; border-radius: 16px; margin-bottom: 20px; letter-spacing: 4px; }
+        .btn { background: var(--primary); color: white; border: none; padding: 14px 25px; border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%; font-size: 16px; transition: 0.2s; }
+        .btn:hover { background: #1d4ed8; transform: translateY(-2px); }
+        .footer-note { font-size: 12px; color: #64748b; margin-top: 25px; line-height: 1.6; }
+        .error-msg { color: #f87171; font-weight: 700; display: none; padding: 20px; border: 1px solid rgba(248, 113, 113, 0.2); border-radius: 12px; background: rgba(248, 113, 113, 0.05); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>XÁC THỰC KEY</h2>
+    <div id="status-text">Đang xác minh quyền truy cập...</div>
+    <div id="error-msg" class="error-msg"></div>
+
+    <div id="key-display" class="key-display">
+        <p style="color: #4ade80; font-weight: 700; margin-bottom: 10px;">✅ Xác minh thành công!</p>
+        <div id="key-value">--------</div>
+        <button class="btn" onclick="copyKey()">SAO CHÉP MÃ</button>
+        <p class="footer-note">Mã kích hoạt có giá trị đến <b>23:59:59</b> hôm nay.<br>Mỗi ngày hệ thống sẽ tự động đổi mã mới.</p>
+    </div>
+</div>
+
 <script>
-    /* SYSTEM PROTECTED - FB AUTO POST */
+    // ================= CẤU HÌNH =================
+    const _S = "TVT@FBAUTOPOST"; 
+    const _L = "https://link4m.com/wKnDNt";
+    // ============================================
+
     (function() {
-        // Mảng dữ liệu đã mã hóa cơ bản để tránh bị soi link và salt
-        const _0x4422 = ["token", "SUCCESS", "search", "getFullYear", "getMonth", "getDate", "padStart", "replaceState", "LICENSE", "TVT@FBAUTOPOST", "charCodeAt", "abs", "toString", "toUpperCase", "substring", "status-text", "style", "display", "none", "key-display", "block", "key-value", "innerText", "error-msg", "Yêu cầu không hợp lệ! Đang chuyển hướng...", "https://link4m.com/wKnDNt"];
+        const p = new URLSearchParams(window.location.search);
+        const t = p.get('token');
         
-        const get = (idx) => _0x4422[idx];
+        // Luôn bắt buộc phải có token SUCCESS từ link rút gọn
+        // Loại bỏ việc kiểm tra localStorage để ép khách phải vượt link mỗi ngày
+        if (t === 'SUCCESS') {
+            const now = new Date();
+            const d = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
+            
+            // Xóa dấu vết token trên URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            showKey(d);
+        } else {
+            fail();
+        }
+    })();
 
-        const init = () => {
-            const p = new URLSearchParams(window.location[get(2)]);
-            if (p.get(get(0)) === get(1)) {
-                const n = new Date();
-                const d = n[get(3)]() + String(n[get(4)]() + 1)[get(6)](2, "0") + String(n[get(5)]())[get(6)](2, "0");
-                window.history[get(7)]({}, document.title, window.location.pathname);
-                render(d);
-            } else {
-                fail();
-            }
-        };
-
-        const render = (d) => {
-            const s = d + get(8) + get(9);
+    function showKey(d) {
+        // Thuật toán băm khớp với Tool
+        const k = (function(s) {
             let h = 0;
             for (let i = 0; i < s.length; i++) {
-                h = ((h << 5) - h) + s[get(10)](i);
+                h = ((h << 5) - h) + s.charCodeAt(i);
                 h |= 0;
             }
-            const k = Math[get(11)](h)[get(12)](36)[get(13)]()[get(14)](0, 8);
-            
-            document.getElementById(get(15))[get(16)][get(17)] = get(18);
-            document.getElementById(get(19))[get(16)][get(17)] = get(20);
-            document.getElementById(get(21))[get(22)] = k;
-        };
+            return Math.abs(h).toString(36).toUpperCase().substring(0, 8);
+        })(d + "LICENSE" + _S);
+        
+        document.getElementById('status-text').style.display = 'none';
+        document.getElementById('key-display').style.display = 'block';
+        document.getElementById('key-value').innerText = k;
+    }
 
-        const fail = () => {
-            const e = document.getElementById(get(23));
-            document.getElementById(get(15))[get(16)][get(17)] = get(18);
-            e[get(16)][get(17)] = get(20);
-            e[get(22)] = get(24);
-            setTimeout(() => { window.location.href = get(25); }, 2500);
-        };
+    function fail() {
+        const e = document.getElementById('error-msg');
+        document.getElementById('status-text').style.display = 'none';
+        e.style.display = 'block';
+        e.innerText = "Yêu cầu truy cập không hợp lệ! Vui lòng vượt link để lấy mã mới.";
+        setTimeout(() => { window.location.href = _L; }, 3000);
+    }
 
-        window.copyKey = () => {
-            const k = document.getElementById(get(21))[get(22)];
-            navigator.clipboard.writeText(k).then(() => { alert("Đã sao chép!"); });
-        };
-
-        init();
-    })();
+    function copyKey() {
+        const k = document.getElementById('key-value').innerText;
+        navigator.clipboard.writeText(k).then(() => { alert("Đã sao chép mã Key!"); });
+    }
 </script>
+</body>
+</html>
