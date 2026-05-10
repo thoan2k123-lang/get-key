@@ -5,40 +5,615 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Xác Thực Hệ Thống - FB AUTO POST</title>
     <style>
-        :root { --primary: #2563eb; --success: #16a34a; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { background: var(--card); padding: 40px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); text-align: center; max-width: 400px; width: 90%; border: 1px solid #334155; }
-        h2 { margin-bottom: 10px; font-size: 24px; font-weight: 800; background: linear-gradient(90deg, #3b82f6, #2dd4bf); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        #status-text { color: #94a3b8; margin-bottom: 20px; font-size: 14px; }
-        .key-display { display: none; margin-top: 20px; animation: fadeIn 0.5s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        #key-value { font-size: 36px; font-weight: 800; color: #4ade80; background: rgba(22, 163, 74, 0.1); border: 2px solid var(--success); padding: 20px; border-radius: 16px; margin-bottom: 20px; letter-spacing: 4px; }
-        .btn { background: var(--primary); color: white; border: none; padding: 14px 25px; border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%; font-size: 16px; transition: 0.2s; }
-        .btn:hover { background: #1d4ed8; transform: translateY(-2px); }
-        .footer-note { font-size: 12px; color: #64748b; margin-top: 25px; line-height: 1.6; }
-        .error-msg { color: #f87171; font-weight: 700; display: none; padding: 20px; border: 1px solid rgba(248, 113, 113, 0.2); border-radius: 12px; background: rgba(248, 113, 113, 0.05); }
+        :root {
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.25);
+            --bg: #0a0f1a;
+            --card: #111827;
+            --card-border: #1e293b;
+            --text: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --danger: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.08);
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --shadow-xl: 0 25px 60px rgba(0, 0, 0, 0.45);
+            --shadow-glow: 0 0 40px rgba(59, 130, 246, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+            background-image:
+                radial-gradient(ellipse at 30% 20%, rgba(59, 130, 246, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 60%),
+                radial-gradient(ellipse at 50% 50%, rgba(99, 102, 241, 0.03) 0%, transparent 70%);
+        }
+
+        /* Hạt particle nền */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .particle {
+            position: absolute;
+            background: var(--primary);
+            border-radius: 50%;
+            opacity: 0.15;
+            animation: floatUp linear infinite;
+        }
+        @keyframes floatUp {
+            0% {
+                transform: translateY(100vh) scale(0);
+                opacity: 0;
+            }
+            15% {
+                opacity: 0.2;
+            }
+            85% {
+                opacity: 0.1;
+            }
+            100% {
+                transform: translateY(-10vh) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        .container {
+            background: var(--card);
+            padding: 44px 36px 36px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl), var(--shadow-glow);
+            text-align: center;
+            max-width: 440px;
+            width: 100%;
+            border: 1px solid var(--card-border);
+            position: relative;
+            z-index: 1;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            animation: cardEntry 0.6s ease-out;
+        }
+        @keyframes cardEntry {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Logo / Icon */
+        .logo-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--primary), #6366f1);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 26px;
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        #status-text {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            font-size: 13.5px;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        /* Trạng thái loading */
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2.5px solid var(--card-border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Key display */
+        .key-display {
+            display: none;
+            animation: fadeSlideIn 0.45s ease forwards;
+        }
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .key-display.show {
+            display: block;
+        }
+
+        #key-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: #4ade80;
+            background: rgba(16, 185, 129, 0.08);
+            border: 2px solid rgba(16, 185, 129, 0.35);
+            padding: 18px 16px;
+            border-radius: var(--radius-md);
+            margin-bottom: 12px;
+            letter-spacing: 3px;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+            user-select: all;
+            transition: var(--transition);
+            word-break: break-all;
+            position: relative;
+            overflow: hidden;
+        }
+        #key-value::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.03), transparent);
+            transform: translateX(-100%);
+            animation: shimmer 2.5s infinite;
+        }
+        @keyframes shimmer {
+            100% {
+                transform: translateX(100%);
+            }
+        }
+        #key-value.copied {
+            border-color: #22c55e;
+            box-shadow: 0 0 25px var(--success-glow);
+            background: rgba(16, 185, 129, 0.15);
+            transform: scale(1.02);
+        }
+
+        /* Countdown */
+        .countdown {
+            font-size: 12.5px;
+            color: var(--text-muted);
+            margin-bottom: 18px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .countdown .timer {
+            color: #fbbf24;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            background: rgba(251, 191, 36, 0.1);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+        }
+
+        /* Buttons */
+        .btn {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 13px 20px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            font-size: 15px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.2px;
+        }
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.35);
+        }
+        .btn:active {
+            transform: scale(0.97);
+            transition: 0.1s;
+        }
+        .btn .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(0);
+            animation: ripple 0.6s ease-out;
+            pointer-events: none;
+        }
+        @keyframes ripple {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1e293b;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 14px;
+            z-index: 999;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
+            border: 1px solid #334155;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* Error message */
+        .error-msg {
+            color: #fca5a5;
+            font-weight: 600;
+            display: none;
+            padding: 18px;
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            border-radius: var(--radius-md);
+            background: var(--danger-bg);
+            margin-top: 8px;
+            animation: fadeSlideIn 0.4s ease forwards;
+        }
+        .error-msg.show {
+            display: block;
+        }
+        .error-msg .icon {
+            font-size: 28px;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .footer-note {
+            font-size: 11.5px;
+            color: var(--text-muted);
+            margin-top: 20px;
+            line-height: 1.7;
+            border-top: 1px solid #1e293b;
+            padding-top: 16px;
+        }
+        .footer-note b {
+            color: #fbbf24;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .container {
+                padding: 32px 20px 24px;
+                border-radius: var(--radius-md);
+            }
+            #key-value {
+                font-size: 22px;
+                letter-spacing: 2px;
+                padding: 14px 12px;
+            }
+            h2 {
+                font-size: 19px;
+            }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>XÁC THỰC KEY</h2>
-    <div id="status-text">Đang xác minh quyền truy cập...</div>
-    <div id="error-msg" class="error-msg"></div>
+    <!-- Hạt particle nền -->
+    <div class="particles" id="particles" aria-hidden="true"></div>
 
-    <div id="key-display" class="key-display">
-        <p style="color: #4ade80; font-weight: 700; margin-bottom: 10px;">✅ Xác minh thành công!</p>
-        <div id="key-value">--------</div>
-        <button class="btn" onclick="copyKey()">SAO CHÉP MÃ</button>
-        <p class="footer-note">Mã kích hoạt có giá trị đến <b>23:59:59</b> hôm nay.<br>Mỗi ngày hệ thống sẽ tự động đổi mã mới.</p>
+    <!-- Toast notification -->
+    <div class="toast" id="toast"></div>
+
+    <div class="container">
+        <div class="logo-icon">🔐</div>
+        <h2>XÁC THỰC KEY</h2>
+        <div id="status-text">
+            <span class="spinner"></span> Đang xác minh quyền truy cập...
+        </div>
+        <div id="error-msg" class="error-msg"></div>
+
+        <div id="key-display" class="key-display">
+            <p style="color:#4ade80;font-weight:700;margin-bottom:6px;font-size:15px;">✅ Xác minh thành công!</p>
+            <div id="key-value">--------</div>
+            <div class="countdown">
+                ⏳ Hết hạn sau: <span class="timer" id="countdown-timer">--:--:--</span>
+            </div>
+            <button class="btn" id="copy-btn">
+                📋 SAO CHÉP MÃ
+            </button>
+            <p class="footer-note">
+                Mã kích hoạt có giá trị đến <b>23:59:59</b> hôm nay.<br>
+                Hệ thống sẽ tự động đổi mã mới vào ngày mai.
+            </p>
+        </div>
     </div>
-</div>
 
-<script>
-    (function() {
-        // Mảng dữ liệu bảo mật
-        const _0x500493=(function(){let _0x1ee793=!![];return function(_0x262a3d,_0x3cc286){const _0x397f09=_0x1ee793?function(){if(_0x3cc286){const _0x307e3b=_0x3cc286['apply'](_0x262a3d,arguments);return _0x3cc286=null,_0x307e3b;}}:function(){};return _0x1ee793=![],_0x397f09;};}()),_0x21cea7=_0x500493(this,function(){return _0x21cea7['toString']()['search']('(((.+)+)+)+$')['toString']()['constructor'](_0x21cea7)['search']('(((.+)+)+)+$');});_0x21cea7();const _v=['token','SUCCESS','search','getFullYear','getMonth','getDate','padStart','replaceState','LICENSE','TVT@FBAUTOPOST','charCodeAt','abs','toString','toUpperCase','substring','status-text','style','display','none','key-display','block','key-value','innerText','error-msg','Lỗi:\x20Truy\x20cập\x20không\x20hợp\x20lệ!','https://link4m.com/wKnDNt'],g=_0x2d469e=>_v[_0x2d469e],run=()=>{try{const _0x4a5b7d=new URLSearchParams(window['location'][g(0x2)]);if(_0x4a5b7d['get'](g(0x0))===g(0x1)){const _0x486598=new Date(),_0x2e111e=_0x486598[g(0x3)]()+String(_0x486598[g(0x4)]()+0x1)[g(0x6)](0x2,'0')+String(_0x486598[g(0x5)]())[g(0x6)](0x2,'0');window['history'][g(0x7)]({},document['title'],window['location']['pathname']);const _0x786a7e=_0x2e111e+g(0x8)+g(0x9);let _0x3b3250=0x0;for(let _0x39a97a=0x0;_0x39a97a<_0x786a7e['length'];_0x39a97a++){_0x3b3250=(_0x3b3250<<0x5)-_0x3b3250+_0x786a7e[g(0xa)](_0x39a97a),_0x3b3250|=0x0;}const _0x1c0ad9=Math[g(0xb)](_0x3b3250)[g(0xc)](0x24)[g(0xd)]()[g(0xe)](0x0,0x8);document['getElementById'](g(0xf))[g(0x10)][g(0x11)]=g(0x12),document['getElementById'](g(0x13))[g(0x10)][g(0x11)]=g(0x14),document['getElementById'](g(0x15))[g(0x16)]=_0x1c0ad9;}else{const _0x313405=document['getElementById'](g(0x17));document['getElementById'](g(0xf))[g(0x10)][g(0x11)]=g(0x12),_0x313405[g(0x10)][g(0x11)]=g(0x14),_0x313405[g(0x16)]=g(0x18),setTimeout(()=>{window['location']['href']=g(0x19);},0xbb8);}}catch(_0x73d587){console['error'](_0x73d587);}};window['copyKey']=()=>{const _0x14cd97=document['getElementById'](g(0x15))[g(0x16)];navigator['clipboard']['writeText'](_0x14cd97)['then'](()=>{alert('Đã\x20sao\x20chép\x20mã\x20Key\x20thành\x20công!');});},run();
-    })();
-</script>
+    <script>
+        (function() {
+            // ============ CONFIG ============
+            const CONFIG = {
+                TOKEN_PARAM: 'token',
+                TOKEN_VALID: 'SUCCESS',
+                SECRET_PREFIX: 'LICENSE',
+                SECRET_SUFFIX: 'TVT@FBAUTOPOST',
+                KEY_LENGTH: 8,
+                REDIRECT_URL: 'https://link4m.com/wKnDNt',
+                REDIRECT_DELAY: 4000, // ms
+            };
+
+            // ============ DOM ELEMENTS ============
+            const $ = (id) => document.getElementById(id);
+            const statusText = $('status-text');
+            const errorMsg = $('error-msg');
+            const keyDisplay = $('key-display');
+            const keyValue = $('key-value');
+            const countdownTimer = $('countdown-timer');
+            const copyBtn = $('copy-btn');
+            const toast = $('toast');
+
+            // ============ UTILS ============
+            function showToast(message, duration = 2500) {
+                toast.textContent = message;
+                toast.classList.add('show');
+                clearTimeout(toast._timeout);
+                toast._timeout = setTimeout(() => toast.classList.remove('show'), duration);
+            }
+
+            function pad(n) {
+                return String(n).padStart(2, '0');
+            }
+
+            /**
+             * Tạo hash SHA-256 rồi rút gọn thành key ngắn
+             * @returns {Promise<string>} Key 8 ký tự viết hoa
+             */
+            async function generateKey() {
+                const now = new Date();
+                const dateStr = now.getFullYear() +
+                    pad(now.getMonth() + 1) +
+                    pad(now.getDate());
+                const raw = dateStr + CONFIG.SECRET_PREFIX + CONFIG.SECRET_SUFFIX;
+
+                // Dùng Web Crypto API để hash SHA-256
+                const encoder = new TextEncoder();
+                const data = encoder.encode(raw);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                // Chuyển thành hex rồi lấy 8 ký tự đầu, viết hoa
+                const hex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                return hex.substring(0, CONFIG.KEY_LENGTH).toUpperCase();
+            }
+
+            /**
+             * Tính số giây còn lại đến 23:59:59 hôm nay
+             */
+            function getSecondsUntilMidnight() {
+                const now = new Date();
+                const midnight = new Date(now);
+                midnight.setHours(23, 59, 59, 999);
+                return Math.max(0, Math.floor((midnight - now) / 1000));
+            }
+
+            /**
+             * Format giây thành HH:MM:SS
+             */
+            function formatTime(seconds) {
+                const h = Math.floor(seconds / 3600);
+                const m = Math.floor((seconds % 3600) / 60);
+                const s = seconds % 60;
+                return `${pad(h)}:${pad(m)}:${pad(s)}`;
+            }
+
+            /**
+             * Cập nhật đồng hồ đếm ngược
+             */
+            function startCountdown() {
+                const update = () => {
+                    const remaining = getSecondsUntilMidnight();
+                    countdownTimer.textContent = formatTime(remaining);
+                    if (remaining <= 0) {
+                        countdownTimer.textContent = '00:00:00';
+                        countdownTimer.style.color = '#ef4444';
+                        keyValue.style.opacity = '0.5';
+                        keyValue.style.borderColor = 'rgba(239,68,68,0.4)';
+                        copyBtn.disabled = true;
+                        copyBtn.textContent = '⛔ ĐÃ HẾT HẠN';
+                        copyBtn.style.background = '#4b5563';
+                        copyBtn.style.cursor = 'not-allowed';
+                        copyBtn.style.pointerEvents = 'none';
+                        clearInterval(countdownInterval);
+                    }
+                };
+                update();
+                const countdownInterval = setInterval(update, 1000);
+            }
+
+            /**
+             * Ripple effect cho button
+             */
+            function addRipple(e) {
+                const btn = e.currentTarget;
+                const ripple = document.createElement('span');
+                ripple.className = 'ripple';
+                const rect = btn.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+                ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+                btn.appendChild(ripple);
+                ripple.addEventListener('animationend', () => ripple.remove());
+            }
+
+            // ============ PARTICLE BACKGROUND ============
+            function createParticles() {
+                const container = $('particles');
+                const colors = ['#3b82f6', '#6366f1', '#10b981', '#f59e0b'];
+                for (let i = 0; i < 35; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    const size = Math.random() * 4 + 2;
+                    particle.style.width = size + 'px';
+                    particle.style.height = size + 'px';
+                    particle.style.left = Math.random() * 100 + '%';
+                    particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    particle.style.animationDuration = Math.random() * 12 + 8 + 's';
+                    particle.style.animationDelay = Math.random() * 10 + 's';
+                    container.appendChild(particle);
+                }
+            }
+
+            // ============ COPY HANDLER ============
+            async function copyKey() {
+                const key = keyValue.textContent.trim();
+                if (!key || key === '--------' || copyBtn.disabled) return;
+
+                try {
+                    await navigator.clipboard.writeText(key);
+                    keyValue.classList.add('copied');
+                    showToast('✅ Đã sao chép mã Key thành công!');
+                    setTimeout(() => keyValue.classList.remove('copied'), 1500);
+                } catch {
+                    // Fallback cho browser cũ
+                    const textarea = document.createElement('textarea');
+                    textarea.value = key;
+                    textarea.style.position = 'fixed';
+                    textarea.style.opacity = '0';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    try {
+                        document.execCommand('copy');
+                        showToast('✅ Đã sao chép mã Key!');
+                    } catch {
+                        showToast('⚠️ Không thể sao chép, vui lòng thử lại');
+                    }
+                    document.body.removeChild(textarea);
+                }
+            }
+
+            // ============ MAIN LOGIC ============
+            async function run() {
+                try {
+                    const params = new URLSearchParams(window.location.search);
+                    const token = params.get(CONFIG.TOKEN_PARAM);
+
+                    // Dọn URL (ẩn token khỏi thanh địa chỉ)
+                    if (token === CONFIG.TOKEN_VALID) {
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }
+
+                    if (token === CONFIG.TOKEN_VALID) {
+                        // --- THÀNH CÔNG ---
+                        const key = await generateKey();
+                        statusText.style.display = 'none';
+                        keyDisplay.classList.add('show');
+                        keyValue.textContent = key;
+
+                        // Đếm ngược
+                        startCountdown();
+
+                        // Gắn sự kiện
+                        copyBtn.addEventListener('click', copyKey);
+                        copyBtn.addEventListener('click', addRipple);
+
+                    } else {
+                        // --- THẤT BẠI ---
+                        statusText.style.display = 'none';
+                        errorMsg.classList.add('show');
+                        errorMsg.innerHTML = `
+                                    <span class="icon">🚫</span>
+                                    <strong>Lỗi: Truy cập không hợp lệ!</strong><br>
+                                    <span style="font-size:12px;color:#f87171;">Bạn sẽ được chuyển hướng sau ${CONFIG.REDIRECT_DELAY/1000} giây...</span>
+                                `;
+
+                        // Đếm ngược chuyển hướng
+                        let secLeft = CONFIG.REDIRECT_DELAY / 1000;
+                        const redirectMsg = errorMsg.querySelector('span:last-child');
+                        const countdownInterval = setInterval(() => {
+                            secLeft--;
+                            if (secLeft <= 0) {
+                                clearInterval(countdownInterval);
+                            } else {
+                                redirectMsg.textContent =
+                                    `Bạn sẽ được chuyển hướng sau ${secLeft} giây...`;
+                            }
+                        }, 1000);
+
+                        setTimeout(() => {
+                            window.location.href = CONFIG.REDIRECT_URL;
+                        }, CONFIG.REDIRECT_DELAY);
+                    }
+                } catch (err) {
+                    console.error('Lỗi hệ thống:', err);
+                    statusText.style.display = 'none';
+                    errorMsg.classList.add('show');
+                    errorMsg.innerHTML = `
+                                <span class="icon">⚠️</span>
+                                <strong>Lỗi hệ thống!</strong><br>
+                                <span style="font-size:12px;">Vui lòng thử lại sau hoặc liên hệ hỗ trợ.</span>
+                            `;
+                }
+            }
+
+            // ============ INIT ============
+            createParticles();
+            run();
+        })();
+    </script>
 </body>
 </html>
