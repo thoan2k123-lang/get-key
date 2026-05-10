@@ -1,45 +1,50 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Lấy Key - FB AUTO POST</title>
+    <title>Lấy Key - Trạm Tương Tác Số</title>
     <meta charset="UTF-8">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto.js"></script>
     <style>
         body { font-family: sans-serif; text-align: center; padding-top: 50px; background: #f4f4f4; }
-        .box { background: white; padding: 20px; border-radius: 10px; display: inline-block; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        #key { font-size: 24px; font-weight: bold; color: #ff4757; margin: 20px 0; border: 2px dashed #ff4757; padding: 10px; }
+        .box { background: white; padding: 30px; border-radius: 15px; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 1px solid #ddd; }
+        #key { font-size: 28px; font-weight: bold; color: #2ed573; margin: 20px 0; border: 2px dashed #2ed573; padding: 15px; background: #f1fff7; }
+        .btn { background: #1e90ff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; }
     </style>
 </head>
 <body>
     <div class="box">
-        <h2>Mã kích hoạt Tool (24h)</h2>
-        <p>Vui lòng sao chép mã bên dưới và dán vào Tool:</p>
-        <div id="key">Đang kiểm tra...</div>
-        <p style="font-size: 12px; color: #666;">Mã sẽ tự động thay đổi sau 12h đêm hàng ngày.</p>
+        <h2>Mã Kích Hoạt Tool (24h)</h2>
+        <p>Hệ thống xác nhận bạn đã vượt link thành công!</p>
+        <div id="key">Đang tạo mã...</div>
+        <p style="font-size: 13px; color: #888;">Mã có tác dụng đến hết ngày hôm nay.</p>
+        <button class="btn" onclick="copyKey()">Sao chép mã</button>
     </div>
 
     <script>
-        // 1. CẤU HÌNH (Thay link Link4M của bạn vào đây)
-        const LINK4M_URL = "https://link4m.com/wY7PY3"; 
-        const SECRET_SALT = "TVT_FB_AUTO_POST"; // Chuỗi bí mật, phải khớp với code trong Tool
+        // CẤU HÌNH
+        const SECRET_SALT = "ThoanDepTrai@2026"; 
+        const LINK4M_URL = "https://link4m.com/your-alias"; // Thay link Link4M của bạn vào đây
 
-        // 2. CHẶN TRUY CẬP TRỰC TIẾP
-        // Kiểm tra nếu không có referrer hoặc referrer không phải từ link4m
-        if (!document.referrer.includes("link4m.com")) {
-            alert("Bạn phải vượt link rút gọn để lấy key!");
+        // KIỂM TRA THAM SỐ TRÊN URL
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('status') !== 'success') {
+            alert("Bạn chưa vượt link rút gọn hoặc truy cập trái phép!");
             window.location.href = LINK4M_URL;
         } else {
             displayKey();
         }
 
         function displayKey() {
-            // Lấy ngày hiện tại (YYYYMMDD)
             const now = new Date();
             const dateStr = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
-            
-            // Tạo Key: MD5(Ngày + Salt) -> Lấy 8 ký tự đầu
             const hash = CryptoJS.MD5(dateStr + SECRET_SALT).toString().toUpperCase();
             document.getElementById("key").innerText = hash.substring(0, 8);
+        }
+
+        function copyKey() {
+            const keyText = document.getElementById("key").innerText;
+            navigator.clipboard.writeText(keyText);
+            alert("Đã sao chép: " + keyText);
         }
     </script>
 </body>
