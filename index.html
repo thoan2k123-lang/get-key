@@ -3,111 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xác Thực Key - FB_AUTO_POST</title>
+    <title>Xác Thực Hệ Thống - FB AUTO POST</title>
     <style>
-        :root { --primary: #007bff; --success: #28a745; --bg: #f4f7f9; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 90%; }
-        h2 { color: #333; margin-bottom: 10px; font-size: 22px; }
-        #status-text { color: #666; margin-bottom: 20px; font-size: 14px; }
-        .key-display { display: none; margin-top: 20px; }
-        #key-value { font-size: 32px; font-weight: bold; color: var(--success); background: #f0fff4; border: 3px dashed var(--success); padding: 15px; border-radius: 10px; margin-bottom: 20px; cursor: pointer; transition: 0.2s; }
-        #key-value:active { transform: scale(0.95); }
-        .btn { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 16px; }
-        .btn:hover { background: #0056b3; }
-        .footer-note { font-size: 11px; color: #999; margin-top: 20px; line-height: 1.5; }
-        .error-msg { color: #dc3545; font-weight: bold; display: none; }
+        :root { --primary: #2563eb; --success: #16a34a; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: var(--card); padding: 40px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); text-align: center; max-width: 400px; width: 90%; border: 1px solid #334155; }
+        h2 { margin-bottom: 10px; font-size: 24px; font-weight: 800; background: linear-gradient(90deg, #3b82f6, #2dd4bf); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        #status-text { color: #94a3b8; margin-bottom: 20px; font-size: 14px; }
+        .key-display { display: none; margin-top: 20px; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        #key-value { font-size: 36px; font-weight: 800; color: #4ade80; background: rgba(22, 163, 74, 0.1); border: 2px solid var(--success); padding: 20px; border-radius: 16px; margin-bottom: 20px; letter-spacing: 4px; }
+        .btn { background: var(--primary); color: white; border: none; padding: 14px 25px; border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%; font-size: 16px; transition: 0.2s; }
+        .btn:hover { background: #1d4ed8; transform: translateY(-2px); }
+        .footer-note { font-size: 12px; color: #64748b; margin-top: 25px; line-height: 1.6; }
+        .error-msg { color: #f87171; font-weight: 700; display: none; padding: 20px; border: 1px solid rgba(248, 113, 113, 0.2); border-radius: 12px; background: rgba(248, 113, 113, 0.05); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>XÁC THỰC HỆ THỐNG</h2>
-    <div id="status-text">Đang kiểm tra quyền truy cập...</div>
-    <div id="error-msg" class="error-msg">TRUY CẬP TRÁI PHÉP!</div>
+    <h2>XÁC THỰC KEY</h2>
+    <div id="status-text">Đang xác minh quyền truy cập...</div>
+    <div id="error-msg" class="error-msg"></div>
 
     <div id="key-display" class="key-display">
-        <p style="color: var(--success); font-weight: bold; margin-bottom: 5px;">Xác minh thành công!</p>
-        <div id="key-value" onclick="copyKey()" title="Click để copy">--------</div>
+        <p style="color: #4ade80; font-weight: 700; margin-bottom: 10px;">✅ Xác minh thành công!</p>
+        <div id="key-value">--------</div>
         <button class="btn" onclick="copyKey()">SAO CHÉP MÃ</button>
-        <p class="footer-note">Mã có tác dụng đến 23:59:59 hôm nay.<br>Sau thời gian này bạn cần vượt link lại để lấy mã mới.</p>
+        <p class="footer-note">Mã kích hoạt có giá trị đến <b>23:59:59</b> hôm nay.<br>Mỗi ngày hệ thống sẽ tự động đổi mã mới.</p>
     </div>
 </div>
 
 <script>
-    // ================= CẤU HÌNH BẠN CẦN SỬA =================
-    const SECRET_SALT = "TVT@FBAUTOPOST"; // Chuỗi bí mật (phải khớp với tool)
-    const LINK4M_URL = "https://link4m.com/wKnDNt"; // Link rút gọn của bạn
-    // ========================================================
+    // ================= CẤU HÌNH =================
+    const _S = "TVT@FBAUTOPOST"; 
+    const _L = "https://link4m.com/wKnDNt";
+    // ============================================
 
-    window.onload = function() {
-        const params = new URLSearchParams(window.location.search);
-        const userToken = params.get('token');
+    (function() {
+        const p = new URLSearchParams(window.location.search);
+        const t = p.get('token');
         
-        // Lấy ngày hiện tại định dạng YYYYMMDD
-        const now = new Date();
-        const dateStr = now.getFullYear() + 
-                        String(now.getMonth() + 1).padStart(2, '0') + 
-                        String(now.getDate()).padStart(2, '0');
-
-        // Kiểm tra vé thông hành cũ trong máy
-        const savedProof = localStorage.getItem('access_proof');
-
-        // LOGIC KIỂM TRA
-        if (userToken === 'SUCCESS' || savedProof === dateStr) {
-            // Nếu có token SUCCESS hoặc đã vượt link trước đó trong ngày
-            localStorage.setItem('access_proof', dateStr);
+        // Luôn bắt buộc phải có token SUCCESS từ link rút gọn
+        // Loại bỏ việc kiểm tra localStorage để ép khách phải vượt link mỗi ngày
+        if (t === 'SUCCESS') {
+            const now = new Date();
+            const d = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
             
-            // Xóa tham số trên URL để khách không copy link có ?token=SUCCESS gửi cho người khác
-            if (window.location.search.includes('token=SUCCESS')) {
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
+            // Xóa dấu vết token trên URL
+            window.history.replaceState({}, document.title, window.location.pathname);
             
-            showKey(dateStr);
+            showKey(d);
         } else {
-            // Truy cập lách luật hoặc vé cũ hết hạn
-            handleAccessDenied();
+            fail();
         }
-    };
+    })();
 
-    function showKey(dateStr) {
-        // Tạo key ngẫu nhiên theo ngày dựa trên hàm băm đơn giản
-        const finalKey = simpleHash(dateStr + "LICENSE" + SECRET_SALT);
+    function showKey(d) {
+        // Thuật toán băm khớp với Tool
+        const k = (function(s) {
+            let h = 0;
+            for (let i = 0; i < s.length; i++) {
+                h = ((h << 5) - h) + s.charCodeAt(i);
+                h |= 0;
+            }
+            return Math.abs(h).toString(36).toUpperCase().substring(0, 8);
+        })(d + "LICENSE" + _S);
         
         document.getElementById('status-text').style.display = 'none';
         document.getElementById('key-display').style.display = 'block';
-        document.getElementById('key-value').innerText = finalKey;
+        document.getElementById('key-value').innerText = k;
     }
 
-    function handleAccessDenied() {
+    function fail() {
+        const e = document.getElementById('error-msg');
         document.getElementById('status-text').style.display = 'none';
-        document.getElementById('error-msg').style.display = 'block';
-        document.getElementById('error-msg').innerText = "Mã truy cập hết hạn hoặc trái phép! Đang quay lại Link4M...";
-        
-        localStorage.removeItem('access_proof'); // Xóa vé cũ nếu có
-        
-        setTimeout(() => {
-            window.location.href = LINK4M_URL;
-        }, 2500);
-    }
-
-    function simpleHash(str) {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-            hash = ((hash << 5) - hash) + str.charCodeAt(i);
-            hash = hash & hash;
-        }
-        // Trả về chuỗi 8 ký tự in hoa
-        return Math.abs(hash).toString(36).toUpperCase().substring(0, 8);
+        e.style.display = 'block';
+        e.innerText = "Yêu cầu truy cập không hợp lệ! Vui lòng vượt link để lấy mã mới.";
+        setTimeout(() => { window.location.href = _L; }, 3000);
     }
 
     function copyKey() {
-        const key = document.getElementById('key-value').innerText;
-        navigator.clipboard.writeText(key).then(() => {
-            alert("Đã sao chép mã thành công!");
-        });
+        const k = document.getElementById('key-value').innerText;
+        navigator.clipboard.writeText(k).then(() => { alert("Đã sao chép mã Key!"); });
     }
 </script>
-
 </body>
 </html>
