@@ -1,90 +1,113 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-    <title>Xác Thực Key - Trạm Tương Tác Số</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xác Thực Key - Trạm Tương Tác Số</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; text-align: center; padding-top: 50px; background: #f0f2f5; }
-        .box { background: white; padding: 40px; border-radius: 15px; display: inline-block; box-shadow: 0 10px 20px rgba(0,0,0,0.1); max-width: 90%; }
-        #key-box { display: none; }
-        #key { font-size: 30px; font-weight: bold; color: #2ecc71; margin: 20px 0; border: 2px dashed #2ecc71; padding: 15px; background: #fafffa; }
-        .loading { font-size: 18px; color: #666; }
-        .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        :root { --primary: #007bff; --success: #28a745; --bg: #f4f7f9; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 90%; }
+        h2 { color: #333; margin-bottom: 10px; font-size: 22px; }
+        #status-text { color: #666; margin-bottom: 20px; font-size: 14px; }
+        .key-display { display: none; margin-top: 20px; }
+        #key-value { font-size: 32px; font-weight: bold; color: var(--success); background: #f0fff4; border: 3px dashed var(--success); padding: 15px; border-radius: 10px; margin-bottom: 20px; cursor: pointer; transition: 0.2s; }
+        #key-value:active { transform: scale(0.95); }
+        .btn { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 16px; }
+        .btn:hover { background: #0056b3; }
+        .footer-note { font-size: 11px; color: #999; margin-top: 20px; line-height: 1.5; }
+        .error-msg { color: #dc3545; font-weight: bold; display: none; }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h2>HỆ THỐNG KEY TỰ ĐỘNG</h2>
-        
-        <div id="loading" class="loading">Đang xác thực quyền truy cập...</div>
 
-        <div id="key-box">
-            <p style="color: #28a745; font-weight: bold;">Xác minh thành công!</p>
-            <div id="key">--------</div>
-            <button class="btn" onclick="copyKey()">SAO CHÉP MÃ</button>
-            <p style="font-size: 12px; color: #888; margin-top: 15px;">Mã này sẽ hết hạn vào lúc 23:59 đêm nay.</p>
-        </div>
+<div class="container">
+    <h2>XÁC THỰC HỆ THỐNG</h2>
+    <div id="status-text">Đang kiểm tra quyền truy cập...</div>
+    <div id="error-msg" class="error-msg">TRUY CẬP TRÁI PHÉP!</div>
+
+    <div id="key-display" class="key-display">
+        <p style="color: var(--success); font-weight: bold; margin-bottom: 5px;">Xác minh thành công!</p>
+        <div id="key-value" onclick="copyKey()" title="Click để copy">--------</div>
+        <button class="btn" onclick="copyKey()">SAO CHÉP MÃ</button>
+        <p class="footer-note">Mã có tác dụng đến 23:59:59 hôm nay.<br>Sau thời gian này bạn cần vượt link lại để lấy mã mới.</p>
     </div>
+</div>
 
-    <script>
-        // --- CẤU HÌNH ---
-        const SECRET_SALT = "ThoanDepTrai@2026"; // Chuỗi bí mật
-        const LINK4M_URL = "https://link4m.net/pLC9O0"; // LINK RÚT GỌN CỦA BẠN
+<script>
+    // ================= CẤU HÌNH BẠN CẦN SỬA =================
+    const SECRET_SALT = "ThoanDepTrai@2026"; // Chuỗi bí mật (phải khớp với tool)
+    const LINK4M_URL = "https://link4m.net/go/pLC9O0"; // Link rút gọn của bạn
+    // ========================================================
+
+    window.onload = function() {
+        const params = new URLSearchParams(window.location.search);
+        const userToken = params.get('token');
         
-        // Tên trang web của bạn trên Link4M (để nhận diện referrer)
-        const SHORTENER_DOMAIN = "link4m.com"; 
+        // Lấy ngày hiện tại định dạng YYYYMMDD
+        const now = new Date();
+        const dateStr = now.getFullYear() + 
+                        String(now.getMonth() + 1).padStart(2, '0') + 
+                        String(now.getDate()).padStart(2, '0');
 
-        window.onload = function() {
-            const today = new Date().toISOString().slice(0, 10).replace(/-/g, ""); // Ví dụ: 20260510
-            const referrer = document.referrer;
+        // Kiểm tra vé thông hành cũ trong máy
+        const savedProof = localStorage.getItem('access_proof');
+
+        // LOGIC KIỂM TRA
+        if (userToken === 'SUCCESS' || savedProof === dateStr) {
+            // Nếu có token SUCCESS hoặc đã vượt link trước đó trong ngày
+            localStorage.setItem('access_proof', dateStr);
             
-            // 1. Kiểm tra nếu khách đến từ Link4M
-            if (referrer.includes(SHORTENER_DOMAIN)) {
-                // Cấp "Vé thông hành" cho ngày hôm nay
-                localStorage.setItem('access_proof', today);
-                showKey(today);
-            } 
-            // 2. Nếu khách vào trực tiếp (Bookmark)
-            else {
-                const savedProof = localStorage.getItem('access_proof');
-                
-                if (savedProof === today) {
-                    // Nếu "Vé" vẫn còn hạn trong ngày hôm nay -> Cho qua
-                    showKey(today);
-                } else {
-                    // Nếu không có vé hoặc vé cũ (ngày hôm qua) -> BẮT VƯỢT LINK LẠI
-                    localStorage.removeItem('access_proof');
-                    document.getElementById('loading').innerText = "Truy cập trái phép! Đang chuyển hướng về Link4M...";
-                    setTimeout(() => {
-                        window.location.href = LINK4M_URL;
-                    }, 2000);
-                }
+            // Xóa tham số trên URL để khách không copy link có ?token=SUCCESS gửi cho người khác
+            if (window.location.search.includes('token=SUCCESS')) {
+                window.history.replaceState({}, document.title, window.location.pathname);
             }
-        };
-
-        function showKey(dateStr) {
-            // Thuật toán tạo Key dựa trên ngày + salt
-            const hash = simpleHash(dateStr + SECRET_SALT);
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('key-box').style.display = 'block';
-            document.getElementById('key').innerText = hash;
+            
+            showKey(dateStr);
+        } else {
+            // Truy cập lách luật hoặc vé cũ hết hạn
+            handleAccessDenied();
         }
+    };
 
-        function simpleHash(str) {
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-                hash = ((hash << 5) - hash) + str.charCodeAt(i);
-                hash = hash & hash;
-            }
-            return Math.abs(hash).toString(36).toUpperCase().substring(0, 8);
-        }
+    function showKey(dateStr) {
+        // Tạo key ngẫu nhiên theo ngày dựa trên hàm băm đơn giản
+        const finalKey = simpleHash(dateStr + "LICENSE" + SECRET_SALT);
+        
+        document.getElementById('status-text').style.display = 'none';
+        document.getElementById('key-display').style.display = 'block';
+        document.getElementById('key-value').innerText = finalKey;
+    }
 
-        function copyKey() {
-            const txt = document.getElementById('key').innerText;
-            navigator.clipboard.writeText(txt);
-            alert("Đã sao chép mã!");
+    function handleAccessDenied() {
+        document.getElementById('status-text').style.display = 'none';
+        document.getElementById('error-msg').style.display = 'block';
+        document.getElementById('error-msg').innerText = "Mã truy cập hết hạn hoặc trái phép! Đang quay lại Link4M...";
+        
+        localStorage.removeItem('access_proof'); // Xóa vé cũ nếu có
+        
+        setTimeout(() => {
+            window.location.href = LINK4M_URL;
+        }, 2500);
+    }
+
+    function simpleHash(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = ((hash << 5) - hash) + str.charCodeAt(i);
+            hash = hash & hash;
         }
-    </script>
+        // Trả về chuỗi 8 ký tự in hoa
+        return Math.abs(hash).toString(36).toUpperCase().substring(0, 8);
+    }
+
+    function copyKey() {
+        const key = document.getElementById('key-value').innerText;
+        navigator.clipboard.writeText(key).then(() => {
+            alert("Đã sao chép mã thành công!");
+        });
+    }
+</script>
+
 </body>
 </html>
