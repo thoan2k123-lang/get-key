@@ -1,79 +1,89 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Lấy Key - Trạm Tương Tác Số</title>
+    <title>Xác Thực Key - Trạm Tương Tác Số</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; padding-top: 50px; background: #e9ecef; color: #333; }
-        .box { background: white; padding: 40px; border-radius: 15px; display: inline-block; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 90%; }
-        h2 { color: #007bff; margin-bottom: 10px; }
-        #key { font-size: 32px; font-weight: bold; color: #28a745; margin: 25px 0; border: 3px dashed #28a745; padding: 20px; background: #f8fff9; border-radius: 10px; cursor: pointer; }
-        .btn { background: #007bff; color: white; padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.3s; }
-        .btn:hover { background: #0056b3; }
-        .note { font-size: 13px; color: #6c757d; margin-top: 15px; }
+        body { font-family: 'Segoe UI', sans-serif; text-align: center; padding-top: 50px; background: #f0f2f5; }
+        .box { background: white; padding: 40px; border-radius: 15px; display: inline-block; box-shadow: 0 10px 20px rgba(0,0,0,0.1); max-width: 90%; }
+        #key-box { display: none; }
+        #key { font-size: 30px; font-weight: bold; color: #2ecc71; margin: 20px 0; border: 2px dashed #2ecc71; padding: 15px; background: #fafffa; }
+        .loading { font-size: 18px; color: #666; }
+        .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="box">
-        <h2>Mã Kích Hoạt Tool (24h)</h2>
-        <p>Hệ thống xác nhận bạn đã vượt link thành công!</p>
+        <h2>HỆ THỐNG KEY TỰ ĐỘNG</h2>
         
-        <div id="key" onclick="copyKey()" title="Click để copy">Đang tạo mã...</div>
-        
-        <button class="btn" onclick="copyKey()">SAO CHÉP MÃ</button>
-        <p class="note">Mã có tác dụng đến 23:59 hôm nay. <br> Sau thời gian này, vui lòng quay lại lấy mã mới.</p>
+        <div id="loading" class="loading">Đang xác thực quyền truy cập...</div>
+
+        <div id="key-box">
+            <p style="color: #28a745; font-weight: bold;">Xác minh thành công!</p>
+            <div id="key">--------</div>
+            <button class="btn" onclick="copyKey()">SAO CHÉP MÃ</button>
+            <p style="font-size: 12px; color: #888; margin-top: 15px;">Mã này sẽ hết hạn vào lúc 23:59 đêm nay.</p>
+        </div>
     </div>
 
     <script>
-        // 1. CẤU HÌNH (Quan trọng: Salt phải giống hệt trong code Tool)
-        const SECRET_SALT = "ThoanDepTrai@2026"; 
-        const LINK4M_URL = "https://link4m.com/wY7PY3"; 
+        // --- CẤU HÌNH ---
+        const SECRET_SALT = "ThoanDepTrai@2026"; // Chuỗi bí mật
+        const LINK4M_URL = "https://link4m.com/wY7PY3"; // LINK RÚT GỌN CỦA BẠN
+        
+        // Tên trang web của bạn trên Link4M (để nhận diện referrer)
+        const SHORTENER_DOMAIN = "link4m.com"; 
 
-        // 2. KIỂM TRA TRUY CẬP
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('status') !== 'success') {
-            alert("Vui lòng vượt link rút gọn để lấy key!");
-            window.location.href = LINK4M_URL;
-        } else {
-            // Chạy ngay khi trang web tải xong
-            window.onload = function() {
-                try {
-                    const today = new Date();
-                    const dateStr = today.getFullYear() + 
-                                    String(today.getMonth() + 1).padStart(2, '0') + 
-                                    String(today.getDate()).padStart(2, '0');
-                    
-                    // Hàm tạo mã đơn giản không cần thư viện ngoài
-                    const rawStr = dateStr + SECRET_SALT;
-                    const finalKey = simpleHash(rawStr);
-                    
-                    document.getElementById("key").innerText = finalKey;
-                } catch (err) {
-                    document.getElementById("key").innerText = "LỖI TẠO MÃ";
-                    console.error(err);
+        window.onload = function() {
+            const today = new Date().toISOString().slice(0, 10).replace(/-/g, ""); // Ví dụ: 20260510
+            const referrer = document.referrer;
+            
+            // 1. Kiểm tra nếu khách đến từ Link4M
+            if (referrer.includes(SHORTENER_DOMAIN)) {
+                // Cấp "Vé thông hành" cho ngày hôm nay
+                localStorage.setItem('access_proof', today);
+                showKey(today);
+            } 
+            // 2. Nếu khách vào trực tiếp (Bookmark)
+            else {
+                const savedProof = localStorage.getItem('access_proof');
+                
+                if (savedProof === today) {
+                    // Nếu "Vé" vẫn còn hạn trong ngày hôm nay -> Cho qua
+                    showKey(today);
+                } else {
+                    // Nếu không có vé hoặc vé cũ (ngày hôm qua) -> BẮT VƯỢT LINK LẠI
+                    localStorage.removeItem('access_proof');
+                    document.getElementById('loading').innerText = "Truy cập trái phép! Đang chuyển hướng về Link4M...";
+                    setTimeout(() => {
+                        window.location.href = LINK4M_URL;
+                    }, 2000);
                 }
-            };
+            }
+        };
+
+        function showKey(dateStr) {
+            // Thuật toán tạo Key dựa trên ngày + salt
+            const hash = simpleHash(dateStr + SECRET_SALT);
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('key-box').style.display = 'block';
+            document.getElementById('key').innerText = hash;
         }
 
-        // Hàm tạo mã băm đơn giản (Thay thế MD5 cho nhẹ và ổn định)
         function simpleHash(str) {
             let hash = 0;
             for (let i = 0; i < str.length; i++) {
-                const char = str.charCodeAt(i);
-                hash = ((hash << 5) - hash) + char;
-                hash = hash & hash; 
+                hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                hash = hash & hash;
             }
-            return Math.abs(hash).toString(16).toUpperCase().substring(0, 8);
+            return Math.abs(hash).toString(36).toUpperCase().substring(0, 8);
         }
 
         function copyKey() {
-            const keyText = document.getElementById("key").innerText;
-            if(keyText === "Đang tạo mã...") return;
-            
-            navigator.clipboard.writeText(keyText).then(() => {
-                alert("Đã sao chép mã: " + keyText);
-            });
+            const txt = document.getElementById('key').innerText;
+            navigator.clipboard.writeText(txt);
+            alert("Đã sao chép mã!");
         }
     </script>
 </body>
