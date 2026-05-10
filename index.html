@@ -3,48 +3,77 @@
 <head>
     <title>Lấy Key - Trạm Tương Tác Số</title>
     <meta charset="UTF-8">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: sans-serif; text-align: center; padding-top: 50px; background: #f4f4f4; }
-        .box { background: white; padding: 30px; border-radius: 15px; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 1px solid #ddd; }
-        #key { font-size: 28px; font-weight: bold; color: #2ed573; margin: 20px 0; border: 2px dashed #2ed573; padding: 15px; background: #f1fff7; }
-        .btn { background: #1e90ff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; padding-top: 50px; background: #e9ecef; color: #333; }
+        .box { background: white; padding: 40px; border-radius: 15px; display: inline-block; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 90%; }
+        h2 { color: #007bff; margin-bottom: 10px; }
+        #key { font-size: 32px; font-weight: bold; color: #28a745; margin: 25px 0; border: 3px dashed #28a745; padding: 20px; background: #f8fff9; border-radius: 10px; cursor: pointer; }
+        .btn { background: #007bff; color: white; padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.3s; }
+        .btn:hover { background: #0056b3; }
+        .note { font-size: 13px; color: #6c757d; margin-top: 15px; }
     </style>
 </head>
 <body>
     <div class="box">
         <h2>Mã Kích Hoạt Tool (24h)</h2>
         <p>Hệ thống xác nhận bạn đã vượt link thành công!</p>
-        <div id="key">Đang tạo mã...</div>
-        <p style="font-size: 13px; color: #888;">Mã có tác dụng đến hết ngày hôm nay.</p>
-        <button class="btn" onclick="copyKey()">Sao chép mã</button>
+        
+        <div id="key" onclick="copyKey()" title="Click để copy">Đang tạo mã...</div>
+        
+        <button class="btn" onclick="copyKey()">SAO CHÉP MÃ</button>
+        <p class="note">Mã có tác dụng đến 23:59 hôm nay. <br> Sau thời gian này, vui lòng quay lại lấy mã mới.</p>
     </div>
 
     <script>
-        // CẤU HÌNH
+        // 1. CẤU HÌNH (Quan trọng: Salt phải giống hệt trong code Tool)
         const SECRET_SALT = "ThoanDepTrai@2026"; 
-        const LINK4M_URL = "https://link4m.com/your-alias"; // Thay link Link4M của bạn vào đây
+        const LINK4M_URL = "https://link4m.com/wY7PY3"; 
 
-        // KIỂM TRA THAM SỐ TRÊN URL
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('status') !== 'success') {
-            alert("Bạn chưa vượt link rút gọn hoặc truy cập trái phép!");
+        // 2. KIỂM TRA TRUY CẬP
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('status') !== 'success') {
+            alert("Vui lòng vượt link rút gọn để lấy key!");
             window.location.href = LINK4M_URL;
         } else {
-            displayKey();
+            // Chạy ngay khi trang web tải xong
+            window.onload = function() {
+                try {
+                    const today = new Date();
+                    const dateStr = today.getFullYear() + 
+                                    String(today.getMonth() + 1).padStart(2, '0') + 
+                                    String(today.getDate()).padStart(2, '0');
+                    
+                    // Hàm tạo mã đơn giản không cần thư viện ngoài
+                    const rawStr = dateStr + SECRET_SALT;
+                    const finalKey = simpleHash(rawStr);
+                    
+                    document.getElementById("key").innerText = finalKey;
+                } catch (err) {
+                    document.getElementById("key").innerText = "LỖI TẠO MÃ";
+                    console.error(err);
+                }
+            };
         }
 
-        function displayKey() {
-            const now = new Date();
-            const dateStr = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
-            const hash = CryptoJS.MD5(dateStr + SECRET_SALT).toString().toUpperCase();
-            document.getElementById("key").innerText = hash.substring(0, 8);
+        // Hàm tạo mã băm đơn giản (Thay thế MD5 cho nhẹ và ổn định)
+        function simpleHash(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; 
+            }
+            return Math.abs(hash).toString(16).toUpperCase().substring(0, 8);
         }
 
         function copyKey() {
             const keyText = document.getElementById("key").innerText;
-            navigator.clipboard.writeText(keyText);
-            alert("Đã sao chép: " + keyText);
+            if(keyText === "Đang tạo mã...") return;
+            
+            navigator.clipboard.writeText(keyText).then(() => {
+                alert("Đã sao chép mã: " + keyText);
+            });
         }
     </script>
 </body>
